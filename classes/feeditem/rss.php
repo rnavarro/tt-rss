@@ -14,14 +14,39 @@ class FeedItem_RSS extends FeedItem_Common {
 		$pubDate = $this->elem->getElementsByTagName("pubDate")->item(0);
 
 		if ($pubDate) {
-			return strtotime($pubDate->nodeValue);
+			return $this->parse_date($pubDate->nodeValue);
 		}
 
 		$date = $this->xpath->query("dc:date", $this->elem)->item(0);
 
 		if ($date) {
-			return strtotime($date->nodeValue);
+			return $this->parse_date($date->nodeValue);
 		}
+	}
+
+	function parse_date($date)
+	{
+		$match = false;
+
+		$date_formats = [
+			"Y-m-d H:i:s",
+			"d/m/Y H:i:s"
+		];
+
+		foreach ($date_formats as $date_format) {
+			$dt = DateTime::createFromFormat($date_format, $date);
+
+			if ($dt !== false && !array_sum($dt->getLastErrors())) {
+				$match = true;
+				$date = $dt->format('U');
+				break;
+			}
+		}
+
+		if (!$match)
+			$date = strtotime($date);
+
+		return $date;
 	}
 
 	function get_link() {
